@@ -1,0 +1,25 @@
+# Ignore root-level .env files
+.env
+.env.local
+.env.*
+
+# Ignore environment files in frontend
+/frontend/.env
+/frontend/.env.*
+# Ignore environment files in backend
+/backend/.env
+/backend/.env.*
+
+# Common folders to ignore
+node_modules/
+**/node_modules/
+
+# Build output folders
+dist/
+build/
+**/dist/
+**/build/
+
+# System/OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,74 @@
+/* -----------------------------
+ ✅ Google Fonts
+------------------------------ */
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700&display=swap');
+
+/* -----------------------------
+ ✅ Tailwind Base & Utilities
+------------------------------ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -----------------------------
+ ✅ Neon Glow (Optional)
+------------------------------ */
+.neon-glow {
+  text-shadow:
+    0 0 5px #00ffff,
+    0 0 10px #00ffff,
+    0 0 20px #0ff,
+    0 0 40px #0ff,
+    0 0 80px #0ff;
+}
+
+/* -----------------------------
+ ✅ Global Body Styling
+------------------------------ */
+body {
+  @apply bg-white text-black font-[Rubik] min-h-screen;
+}
+
+/* -----------------------------
+ ✅ Universal Form Elements
+------------------------------ */
+input,
+select,
+textarea {
+  @apply bg-white border border-gray-300 text-black rounded-lg px-4 py-2 placeholder-gray-500;
+}
+
+/* -----------------------------
+ ✅ Label Styling
+------------------------------ */
+label {
+  @apply text-sm font-medium text-gray-700;
+}
+
+/* -----------------------------
+ ✅ Buttons (Default)
+------------------------------ */
+button {
+  @apply bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white font-bold py-2 px-4 rounded-xl shadow-md hover:scale-105 transition-all duration-300;
+}
+
+/* -----------------------------
+ ✅ Anchor Links
+------------------------------ */
+a {
+  @apply text-blue-700 hover:text-blue-900 underline;
+}
+
+/* -----------------------------
+ ✅ Card Component
+------------------------------ */
+.card {
+  @apply bg-white border border-gray-300 rounded-2xl p-6 shadow text-black;
+}
+
+/* -----------------------------
+ ✅ Section Wrapper
+------------------------------ */
+.section-container {
+  @apply max-w-5xl mx-auto px-6 py-8;
+}
