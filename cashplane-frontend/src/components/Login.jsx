@@ -1,146 +1,165 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
-import { FcGoogle } from "react-icons/fc";
-import { FiEye, FiEyeOff } from "react-icons/fi";
-import { toast } from "react-hot-toast";
-import api from "../services/api";
-import { useNavigate } from "react-router-dom";
+import { auth, provider } from "../firebase";
 import {
-  sendPasswordResetEmail,
   signInWithPopup,
-  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
-import { auth, db } from "../firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { IoArrowBack } from "react-icons/io5";
 
 export default function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
 
-  const handleLogin = async (e) => {
+  const ADMIN_EMAIL = "cashplanehq@gmail.com";
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleEmailLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      const res = await api.post("/auth/login", {
-        email: form.email,
-        password: form.password,
-      });
-      toast.success(res.data.message || "🎉 Logged in successfully!");
-      navigate("/dashboard");
-    } catch (err) {
-      const msg = err.response?.data?.message || "Login failed.";
-      toast.error(msg);
+      const result = await signInWithEmailAndPassword(
+        auth,
+        form.email,
+        form.password
+      );
+      const user = result.user;
+
+      toast.success("Login successful!");
+      if (user.email === ADMIN_EMAIL) {
+        navigate("/admin-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error("Email login failed:", error);
+      toast.error("Invalid email or password");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
+    setLoading(true);
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      const idToken = await user.getIdToken();
 
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        name: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL || null,
-        createdAt: new Date().toISOString(),
-      });
-
-      await api.post("/auth/google-login", { token: idToken });
-
-      toast.success("🎉 Logged in with Google!");
-      navigate("/dashboard");
+      if (user.email === ADMIN_EMAIL) {
+        toast.success("Welcome Admin!");
+        navigate("/admin-dashboard");
+      } else {
+        toast.success("Login successful!");
+        navigate("/dashboard");
+      }
     } catch (error) {
-      console.error("Google login error:", error);
-      toast.error("❌ Google login failed.");
+      console.error("Google login failed:", error);
+      toast.error("Google login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handlePasswordReset = async () => {
-    if (!form.email) {
-      toast.error("Please enter your email to reset password.");
-      return;
-    }
-
+    if (!form.email) return toast.error("Enter your email to reset password");
+    setResetting(true);
     try {
-      setResetting(true);
       await sendPasswordResetEmail(auth, form.email);
-      toast.success("📩 Password reset email sent!");
+      toast.success("Password reset email sent!");
     } catch (error) {
-      toast.error("❌ Failed to send reset email. " + error.message);
+      console.error("Reset error:", error);
+      toast.error("Failed to send reset email");
     } finally {
       setResetting(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md space-y-6">
-      <h2 className="text-2xl font-bold text-center text-gray-900">
-        🔐 Login to CashPlane
-      </h2>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
+      <div className="w-full max-w-md bg-gray-800 p-6 rounded-lg shadow-md relative">
 
-      <form onSubmit={handleLogin} className="space-y-4 text-gray-900">
-        <input
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          className="w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-          required
-        />
-
-        <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="w-full border px-4 py-2 rounded pr-10 focus:outline-none focus:ring-2 focus:ring-green-500"
-            required
-          />
-          <span
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 cursor-pointer"
-            onClick={() => setShowPassword((prev) => !prev)}
-            title={showPassword ? "Hide Password" : "Show Password"}
-          >
-            {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
-          </span>
-        </div>
-
-        <div className="flex justify-between text-sm mt-1">
-          <button
-            type="button"
-            onClick={handlePasswordReset}
-            className="text-blue-500 hover:underline"
-            disabled={resetting}
-          >
-            {resetting ? "Sending..." : "Forgot password?"}
-          </button>
-        </div>
-
+        {/* Back Button */}
         <button
-          type="submit"
-          className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition duration-200"
+          onClick={() => navigate(-1)}
+          className="absolute -top-3 -left-3 bg-gray-200 hover:bg-gray-300 text-black rounded-full p-2 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+          title="Go Back"
         >
-          ✅ Login
+          <IoArrowBack size={18} />
         </button>
-      </form>
 
-      <div className="my-6 flex items-center">
-        <hr className="flex-grow border-gray-300" />
-        <span className="mx-4 text-gray-500 font-medium">or</span>
-        <hr className="flex-grow border-gray-300" />
+        <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
+
+        {/* Email Login Form */}
+        <form onSubmit={handleEmailLogin} className="space-y-4">
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none"
+          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2 text-gray-400"
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+
+          <div className="flex justify-between text-sm text-gray-300">
+            <button
+              type="button"
+              onClick={handlePasswordReset}
+              disabled={resetting}
+              className="hover:underline"
+            >
+              {resetting ? "Sending..." : "Forgot Password?"}
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold"
+          >
+            {loading ? "Logging in..." : "Sign in with Email"}
+          </button>
+        </form>
+
+        <div className="my-6 border-t border-gray-600"></div>
+
+        {/* Google Login */}
+        <button
+          onClick={handleGoogleLogin}
+          disabled={loading}
+          className="w-full py-2 bg-red-500 hover:bg-red-600 rounded text-white font-semibold"
+        >
+          {loading ? "Please wait..." : "Sign in with Google"}
+        </button>
       </div>
-
-      <button
-        onClick={handleGoogleLogin}
-        className="w-full border py-2 rounded flex items-center justify-center space-x-2 hover:bg-gray-100 transition duration-200 text-gray-800"
-      >
-        <FcGoogle size={20} />
-        <span>Sign in with Google</span>
-      </button>
     </div>
   );
 }

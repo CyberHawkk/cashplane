@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect, useState } from "react";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
@@ -13,12 +12,19 @@ import Activate from "./components/Activate";
 import ReferralStep from "./components/ReferralStep";
 import Payment from "./pages/Payment";
 import PaymentConfirm from "./pages/PaymentConfirm";
+import MomoSuccess from "./pages/MomoSuccess";
 import Dashboard from "./pages/Dashboard";
 import Games from "./pages/Games";
-import Verify from "./pages/Verify"; // Email verification screen
-import AdminDashboard from "./pages/AdminDashboard"; // Admin dashboard
+import Verify from "./pages/Verify";
+import AdminDashboard from "./pages/AdminDashboard";
 
-// Admin email(s)
+// 🕹️ Game Components - Correct paths to src/games/
+import FlappyBird from "./games/FlappyBird";
+import TRexRunner from "./games/TRexRunner";
+import CandyCrush from "./games/CandyCrush";
+import Aviator from "./games/Aviator";
+import SnakeGame from "./games/SnakeGame";  // <-- Added SnakeGame
+
 const ADMIN_EMAILS = ["cashplanehq@gmail.com"];
 
 export default function App() {
@@ -27,7 +33,6 @@ export default function App() {
   const [userData, setUserData] = useState(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Listen for auth state changes & fetch user data
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
@@ -53,30 +58,23 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Route guard: blocks unauthenticated users
   const ProtectedRoute = ({ children }) => {
     if (checkingAuth) return <p className="text-center">Loading...</p>;
     if (!user) return <Navigate to="/login" replace />;
     return children;
   };
 
-  // Flow control for redirecting users based on activation & verification status
   const FlowControl = () => {
     if (checkingAuth) return <p className="text-center">Loading...</p>;
-
     if (!user) return <Navigate to="/login" replace />;
 
-    // Admin bypasses activation/payment/referral checks
     if (ADMIN_EMAILS.includes(user.email)) {
       return <Navigate to="/admin" replace />;
     }
 
     if (!user.emailVerified) return <Navigate to="/verify-email" replace />;
-
     if (!userData) return <p className="text-center">Loading user data...</p>;
-
     if (!userData.isActivated) return <Navigate to="/activate" replace />;
-
     if (!userData.referralCodeConfirmed) return <Navigate to="/referral" replace />;
 
     return <Navigate to="/dashboard" replace />;
@@ -84,7 +82,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-black text-white px-4 py-8 relative">
-      {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
         className="absolute top-4 left-4 bg-black bg-opacity-50 text-gray-100 border border-gray-600 px-4 py-2 rounded-full shadow hover:bg-opacity-70 transition-all duration-300"
@@ -95,7 +92,6 @@ export default function App() {
       <Toaster position="top-center" reverseOrder={false} />
 
       <Routes>
-        {/* Landing Page */}
         <Route
           path="/"
           element={
@@ -113,20 +109,17 @@ export default function App() {
           }
         />
 
-        {/* Controlled Redirect After Login */}
         <Route path="/auth-flow" element={<FlowControl />} />
-
-        {/* Public Routes */}
         <Route path="/register" element={<Registration />} />
         <Route path="/login" element={<Login />} />
         <Route path="/verify-email" element={<Verify />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
 
-        {/* Protected User Flow */}
         <Route
           path="/activate"
           element={
             <ProtectedRoute>
-              <Activate />
+              <Activate user={user} userData={userData} />
             </ProtectedRoute>
           }
         />
@@ -134,7 +127,7 @@ export default function App() {
           path="/referral"
           element={
             <ProtectedRoute>
-              <ReferralStep />
+              <ReferralStep user={user} userData={userData} />
             </ProtectedRoute>
           }
         />
@@ -142,7 +135,7 @@ export default function App() {
           path="/payment"
           element={
             <ProtectedRoute>
-              <Payment />
+              <Payment user={user} userData={userData} />
             </ProtectedRoute>
           }
         />
@@ -150,7 +143,7 @@ export default function App() {
           path="/payment/btc"
           element={
             <ProtectedRoute>
-              <PaymentConfirm />
+              <PaymentConfirm user={user} userData={userData} />
             </ProtectedRoute>
           }
         />
@@ -158,7 +151,15 @@ export default function App() {
           path="/payment/momo"
           element={
             <ProtectedRoute>
-              <PaymentConfirm />
+              <PaymentConfirm user={user} userData={userData} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment/momo-success"
+          element={
+            <ProtectedRoute>
+              <MomoSuccess user={user} userData={userData} />
             </ProtectedRoute>
           }
         />
@@ -166,7 +167,7 @@ export default function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Dashboard user={user} userData={userData} />
             </ProtectedRoute>
           }
         />
@@ -174,17 +175,68 @@ export default function App() {
           path="/games"
           element={
             <ProtectedRoute>
-              <Games />
+              <Games user={user} userData={userData} />
             </ProtectedRoute>
           }
         />
 
-        {/* Admin Dashboard */}
+        {/* 🎮 Game Routes */}
+        <Route
+          path="/games/aviator"
+          element={
+            <ProtectedRoute>
+              <Aviator />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/candycrush"
+          element={
+            <ProtectedRoute>
+              <CandyCrush />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/flappybird"
+          element={
+            <ProtectedRoute>
+              <FlappyBird />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/trex"
+          element={
+            <ProtectedRoute>
+              <TRexRunner />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 🐍 Snake Game Routes */}
+        <Route
+          path="/games/snake"
+          element={
+            <ProtectedRoute>
+              <SnakeGame />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/snake"
+          element={
+            <ProtectedRoute>
+              <SnakeGame />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/admin"
           element={
             <ProtectedRoute>
-              <AdminDashboard />
+              <AdminDashboard user={user} userData={userData} />
             </ProtectedRoute>
           }
         />

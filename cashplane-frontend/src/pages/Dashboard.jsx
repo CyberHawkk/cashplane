@@ -11,6 +11,7 @@ import FlappyBird from "../games/FlappyBird";
 import TRexRunner from "../games/TRexRunner";
 import CandyCrush from "../games/CandyCrush";
 import Aviator from "../games/Aviator";
+import SnakeGame from "../games/SnakeGame";
 
 export default function Dashboard() {
   const [userData, setUserData] = useState(null);
@@ -34,9 +35,7 @@ export default function Dashboard() {
         if (userSnap.exists()) {
           const data = userSnap.data();
 
-          // Check if user is activated and payment is confirmed
           if (data.activated === true && data.paymentConfirmed === true) {
-            // Subscribe to realtime updates after passing checks
             const unsubscribe = onSnapshot(userRef, (docSnap) => {
               if (docSnap.exists()) {
                 const updatedData = docSnap.data();
@@ -48,7 +47,6 @@ export default function Dashboard() {
 
             return () => unsubscribe();
           } else {
-            // Not activated or payment pending → redirect to /activate
             navigate("/activate");
           }
         } else {
@@ -89,12 +87,16 @@ export default function Dashboard() {
         return <CandyCrush />;
       case "aviator":
         return <Aviator />;
+      case "snake":
+        return <SnakeGame />;
       default:
         return null;
     }
   };
 
-  if (!userData) return <div className="text-center p-6">Loading dashboard...</div>;
+  if (!userData) {
+    return <div className="text-center p-6">Loading dashboard...</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 mt-10 bg-white rounded-2xl shadow-md space-y-6">
@@ -143,7 +145,7 @@ export default function Dashboard() {
       <div className="mt-10 space-y-4">
         <h2 className="text-xl font-semibold text-center">🎮 Play & Earn Games</h2>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           <button
             onClick={() => setSelectedGame("flappy")}
             className="bg-blue-100 hover:bg-blue-300 text-blue-900 font-semibold py-2 rounded-lg shadow"
@@ -168,9 +170,15 @@ export default function Dashboard() {
           >
             ✈️ Aviator
           </button>
+          <button
+            onClick={() => setSelectedGame("snake")}
+            className="bg-yellow-100 hover:bg-yellow-300 text-yellow-900 font-semibold py-2 rounded-lg shadow"
+          >
+            🐍 Snake Game
+          </button>
         </div>
 
-        <div className="mt-6 bg-gray-100 p-6 rounded-xl shadow-inner">
+        <div className="mt-6 bg-gray-100 p-6 rounded-xl shadow-inner min-h-[400px]">
           {selectedGame ? (
             renderSelectedGame()
           ) : (

@@ -1,134 +1,101 @@
 // src/components/Activate.jsx
-import React, { useState } from "react";
-import { toast } from "react-hot-toast";
-import { auth, db } from "../firebase";
-import { doc, updateDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
 
-// ✅ BTC address and QR code image (place /public/btc-qr.png)
-const BTC_ADDRESS = "bc1qvftpl4dv6s2pdlwqk0d7sl2e50607etlnf4nu4";
-const BTC_QR_IMAGE = "/btc-qr.png";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { auth } from "../firebase";
+import { toast } from "react-hot-toast";
 
 export default function Activate() {
   const navigate = useNavigate();
-  const user = auth.currentUser;
-  const [isPaying, setIsPaying] = useState(false);
+  const { user, loading } = useAuth();
+  const [checking, setChecking] = useState(false);
+  const [resending, setResending] = useState(false);
 
-  // Back button handler
-  const handleBack = () => navigate(-1);
-
-  // Logout handler
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      toast.success("Logged out successfully.");
-      navigate("/login");
-    } catch {
-      toast.error("Failed to log out.");
+  // Automatically redirect if already verified
+  useEffect(() => {
+    if (user?.emailVerified) {
+      toast.success("Email already verified!");
+      navigate("/payment");
     }
-  };
+  }, [user, navigate]);
 
-  // User confirms BTC payment manually (set paymentPending)
-  const handleBTCConfirm = async () => {
+  // Manual check if user has verified email
+  const handleCheckVerification = async () => {
+    setChecking(true);
     try {
-      await updateDoc(doc(db, "users", user.uid), {
-        paymentPending: true,
-        paymentMethod: "BTC",
-      });
-      toast.success("BTC payment marked! We'll verify and activate your account.");
-      navigate("/enter-referral");
+      await auth.currentUser.reload();
+      const refreshedUser = auth.currentUser;
+
+      if (refreshedUser.emailVerified) {
+        toast.success("Email verified successfully!");
+        navigate("/payment");
+      } else {
+        toast.error("Your email is still not verified.");
+      }
     } catch (error) {
-      toast.error("Failed to update payment status.");
+      toast.error("Error checking verification status.");
       console.error(error);
+    } finally {
+      setChecking(false);
     }
   };
 
-  // Trigger Paystack MoMo payment
-  const handlePaystack = () => {
-    setIsPaying(true);
-    const handler = window.PaystackPop.setup({
-      key: "pk_live_9c716c19c87c7a95c5fbe431ec5a65b38a26336f", // Replace with your live public key
-      email: user.email,
-      amount: 10000, // ₵100 = 10,000 pesewas
-      currency: "GHS",
-      label: "CashPlane Activation",
-      channels: ["mobile_money"], // MoMo only
-      callback: async function (response) {
-        try {
-          await updateDoc(doc(db, "users", user.uid), {
-            paymentPending: true,
-            paymentMethod: "MoMo",
-          });
-          toast.success("MoMo payment complete! Verifying...");
-          setIsPaying(false);
-          navigate("/enter-referral");
-        } catch (error) {
-          toast.error("Error saving payment status.");
-          setIsPaying(false);
-        }
-      },
-      onClose: function () {
-        toast.error("Payment window closed.");
-        setIsPaying(false);
-      },
-    });
-    handler.openIframe();
+  // Optional: Resend verification email
+  const handleResendEmail = async () => {
+    setResending(true);
+    try {
+      await auth.currentUser.sendEmailVerification();
+      toast.success("Verification email resent!");
+    } catch (error) {
+      toast.error("Failed to resend email.");
+      console.error(error);
+    } finally {
+      setResending(false);
+    }
   };
+
+  // Show loading screen while auth state is resolving
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <p className="text-gray-600 text-lg">Loading...</p>
+      </div>
+    );
+  }
+
+  // If no user, prompt to login
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <p className="text-red-500 text-lg">No user found. Please log in.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 text-white max-w-2xl mx-auto bg-gray-900 rounded-lg shadow-lg mt-10">
-      {/* Back & Logout buttons */}
-      <div className="flex justify-between mb-4">
-        <button
-          onClick={handleBack}
-          className="text-blue-400 hover:underline"
-          aria-label="Back"
-        >
-          ← Back
-        </button>
-        <button
-          onClick={handleLogout}
-          className="text-red-500 hover:underline"
-          aria-label="Logout"
-        >
-          Log Out
-        </button>
-      </div>
-
-      <h2 className="text-2xl font-bold mb-4">🔐 Activate Your Account</h2>
-
-      {/* BTC Payment Option */}
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold mb-2">Option 1: Pay with Bitcoin</h3>
-        <p className="mb-2">
-          Send exactly <strong>₵100 worth of BTC</strong> to the address below:
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center space-y-5">
+        <h2 className="text-2xl font-bold text-gray-800">Verify Your Email</h2>
+        <p className="text-gray-600">
+          A verification email was sent to <strong>{user.email}</strong>. <br />
+          Please click the link in your inbox to verify.
         </p>
-        <img src={BTC_QR_IMAGE} alt="BTC QR Code" className="w-40 h-40 mb-2 mx-auto" />
-        <code className="block bg-gray-800 p-2 rounded mb-4 break-all text-center">
-          {BTC_ADDRESS}
-        </code>
+
         <button
-          onClick={handleBTCConfirm}
-          className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded w-full"
+          onClick={handleCheckVerification}
+          disabled={checking}
+          className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition"
         >
-          I’ve Paid with BTC
+          {checking ? "Checking..." : "I've Verified My Email"}
         </button>
-      </div>
 
-      <hr className="my-6 border-gray-600" />
-
-      {/* MoMo Payment Option via Paystack */}
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold mb-2">Option 2: MoMo (Paystack)</h3>
-        <p className="mb-2">Instantly pay ₵100 via MTN, Vodafone, or AirtelTigo.</p>
         <button
-          onClick={handlePaystack}
-          disabled={isPaying}
-          className={`w-full py-2 rounded text-white ${
-            isPaying ? "bg-gray-600" : "bg-green-500 hover:bg-green-600"
-          }`}
+          onClick={handleResendEmail}
+          disabled={resending}
+          className="w-full bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300 transition"
         >
-          {isPaying ? "Processing..." : "Pay with MoMo (via Paystack)"}
+          {resending ? "Resending..." : "Resend Verification Email"}
         </button>
       </div>
     </div>

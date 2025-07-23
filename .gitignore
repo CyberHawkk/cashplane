@@ -23,3 +23,6 @@ build/
 # System/OS files
 .DS_Store
 Thumbs.db
+
+# ✅ Ignore cashplane root folder
+/cashplane/

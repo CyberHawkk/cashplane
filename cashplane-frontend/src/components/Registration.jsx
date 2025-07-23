@@ -45,7 +45,7 @@ export default function Registration() {
         displayName: form.fullname,
       });
 
-      await sendEmailVerification(user); // ✅ send email verification
+      await sendEmailVerification(user);
 
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
@@ -56,7 +56,7 @@ export default function Registration() {
       });
 
       toast.success("Verification email sent. Check your inbox.");
-      navigate("/verify"); // ✅ go to verify page
+      navigate("/verify");
     } catch (err) {
       console.error("Email signup error:", err.message);
       toast.error("Signup failed. " + err.message);

@@ -1,0 +1,17 @@
+@keyframes flight {
+  0% {
+    left: -100px;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    transform: translateY(-80%) scale(1.2);
+  }
+  100% {
+    left: 100%;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+.animate-flight {
+  animation: flight 5s linear forwards;
+}
