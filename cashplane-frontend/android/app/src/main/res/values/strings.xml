@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CashPlane</string>
+    <string name="title_activity_main">CashPlane</string>
+    <string name="package_name">com.cashplane.app</string>
+    <string name="custom_url_scheme">com.cashplane.app</string>
+</resources>

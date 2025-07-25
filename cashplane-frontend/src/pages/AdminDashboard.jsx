@@ -1,4 +1,3 @@
-// src/pages/AdminDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
@@ -15,8 +14,17 @@ export default function AdminDashboard() {
     paidUsers: 0,
     totalEarnings: 0,
   });
+  const [logoFound, setLogoFound] = useState(true);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if logo exists in public folder
+    const img = new Image();
+    img.onload = () => setLogoFound(true);
+    img.onerror = () => setLogoFound(false);
+    img.src = "/cashplane-logo.png";
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -117,6 +125,19 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
+      {/* Logo */}
+      <div className="flex justify-center mb-6">
+        {logoFound ? (
+          <img
+            src="/cashplane-logo.png"
+            alt="CashPlane Logo"
+            className="h-16 object-contain"
+          />
+        ) : (
+          <p className="text-gray-400">Logo not found. Place it in /public as cashplane-logo.png</p>
+        )}
+      </div>
+
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">🛠️ Admin Dashboard</h1>

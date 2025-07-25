@@ -13,11 +13,14 @@ import CandyCrush from "../games/CandyCrush";
 import Aviator from "../games/Aviator";
 import SnakeGame from "../games/SnakeGame";
 
+const logoSrc = "/cashplane-logo.png";
+
 export default function Dashboard() {
   const [userData, setUserData] = useState(null);
   const [selectedGame, setSelectedGame] = useState(null);
   const [balance, setBalance] = useState(0);
   const [referralCode, setReferralCode] = useState("");
+  const [logoError, setLogoError] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -100,6 +103,24 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 mt-10 bg-white rounded-2xl shadow-md space-y-6">
+      {/* Logo at the top */}
+      <div className="flex justify-center mb-6">
+        {!logoError ? (
+          <div className="h-24 w-24 rounded-full bg-white/10 border border-blue-400 p-1 shadow-lg shadow-blue-500/30 flex items-center justify-center">
+            <img
+              src={logoSrc}
+              alt="CashPlane Logo"
+              className="h-20 w-20 object-contain rounded-full"
+              onError={() => setLogoError(true)}
+            />
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500 italic text-center">
+            Logo not found. Please place <strong>cashplane-logo.png</strong> in <code>/public</code>
+          </div>
+        )}
+      </div>
+
       <h1 className="text-2xl font-bold">🚀 Welcome back, {userData.fullname || "Player"}!</h1>
 
       {/* USER INFO */}

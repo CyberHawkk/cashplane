@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -23,15 +23,18 @@ import FlappyBird from "./games/FlappyBird";
 import TRexRunner from "./games/TRexRunner";
 import CandyCrush from "./games/CandyCrush";
 import Aviator from "./games/Aviator";
-import SnakeGame from "./games/SnakeGame";  // <-- Added SnakeGame
+import SnakeGame from "./games/SnakeGame";
 
 const ADMIN_EMAILS = ["cashplanehq@gmail.com"];
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const hideBackButtonRoutes = ["/", "/login", "/register"];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -82,12 +85,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-black text-white px-4 py-8 relative">
-      <button
-        onClick={() => navigate(-1)}
-        className="absolute top-4 left-4 bg-black bg-opacity-50 text-gray-100 border border-gray-600 px-4 py-2 rounded-full shadow hover:bg-opacity-70 transition-all duration-300"
-      >
-        ⬅ Back
-      </button>
+      {!hideBackButtonRoutes.includes(location.pathname) && (
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-4 left-4 bg-black bg-opacity-50 text-gray-100 border border-gray-600 px-4 py-2 rounded-full shadow hover:bg-opacity-70 transition-all duration-300"
+        >
+          ⬅ Back
+        </button>
+      )}
 
       <Toaster position="top-center" reverseOrder={false} />
 
@@ -213,8 +218,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
-        {/* 🐍 Snake Game Routes */}
         <Route
           path="/games/snake"
           element={
@@ -231,7 +234,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/admin"
           element={

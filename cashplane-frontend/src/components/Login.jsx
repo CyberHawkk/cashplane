@@ -9,7 +9,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { IoArrowBack } from "react-icons/io5";
+
+const logoSrc = "/cashplane-logo.png";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   const ADMIN_EMAIL = "cashplanehq@gmail.com";
 
@@ -87,15 +89,24 @@ export default function Login() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
       <div className="w-full max-w-md bg-gray-800 p-6 rounded-lg shadow-md relative">
-
-        {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute -top-3 -left-3 bg-gray-200 hover:bg-gray-300 text-black rounded-full p-2 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-          title="Go Back"
-        >
-          <IoArrowBack size={18} />
-        </button>
+        {/* Logo */}
+        <div className="flex justify-center mb-4">
+          {!logoError ? (
+            <div className="h-24 w-24 rounded-full bg-white/10 border border-blue-400 p-1 shadow-lg shadow-blue-500/30 flex items-center justify-center">
+              <img
+                src={logoSrc}
+                alt="CashPlane Logo"
+                className="h-20 w-20 object-contain rounded-full"
+                onError={() => setLogoError(true)}
+              />
+            </div>
+          ) : (
+            <div className="text-sm text-gray-400 italic text-center">
+              Logo not found. Place it in <code>/public</code> as{" "}
+              <strong>cashplane-logo.png</strong>
+            </div>
+          )}
+        </div>
 
         <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
 
