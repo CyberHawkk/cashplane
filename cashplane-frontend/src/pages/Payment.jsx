@@ -1,18 +1,16 @@
 // src/pages/Payment.jsx
 import React, { useEffect, useState } from "react";
-import { auth } from "../firebase";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { v4 as uuidv4 } from "uuid";
 import emailjs from "emailjs-com";
-import QRCode from "react-qr-code";  // <-- updated import
+import QRCode from "react-qr-code";
 
 export default function Payment() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [processing, setProcessing] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState("momo");
 
   const btcAddress = "bc1q0cncuzh44j7gac49vhgt9tccq7n6xh3u8j203z";
 
@@ -29,34 +27,16 @@ export default function Payment() {
       return;
     }
 
-    if (selectedMethod === "btc") {
-      toast.success("BTC Payment option selected.");
+    // BTC Payment flow
+    toast.success("BTC Payment option selected.");
+    setProcessing(true);
 
-      setProcessing(true);
-      setTimeout(() => {
-        setProcessing(false);
-        toast.success("BTC Payment confirmed (simulated)");
-        handlePostPayment();
-      }, 5000);
-    } else {
-      const paystack = window.PaystackPop.setup({
-        key: "pk_live_9c716c19c87c7a95c5fbe431ec5a65b38a26336f",
-        email: user.email,
-        amount: 10000,
-        currency: "GHS",
-        label: "CashPlane Payment",
-        channels: ["mobile_money", "card"],
-        callback: () => {
-          toast.success("Payment successful!");
-          handlePostPayment();
-        },
-        onClose: function () {
-          toast.error("Payment cancelled");
-        },
-      });
-
-      paystack.openIframe();
-    }
+    // Simulate BTC payment confirmation
+    setTimeout(() => {
+      setProcessing(false);
+      toast.success("BTC Payment confirmed (simulated)");
+      handlePostPayment();
+    }, 5000);
   };
 
   const handlePostPayment = () => {
@@ -106,65 +86,37 @@ export default function Payment() {
       <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center space-y-6">
         <h2 className="text-2xl font-bold text-gray-800">Make Payment</h2>
         <p className="text-gray-600">
-          Pay ₵100 via your preferred method to access your dashboard.
+          Pay ₵100 worth of BTC to access your dashboard.
         </p>
 
-        <div className="flex justify-center gap-4">
+        {/* BTC Payment Details */}
+        <div className="bg-gray-100 p-4 rounded space-y-3">
+          <p className="text-sm text-gray-800">
+            Send exactly ₵100 worth of BTC to:
+          </p>
+          <p className="font-mono text-sm text-gray-900 break-all">{btcAddress}</p>
+
           <button
-            onClick={() => setSelectedMethod("momo")}
-            className={`px-4 py-2 rounded ${
-              selectedMethod === "momo"
-                ? "bg-green-600 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
+            onClick={copyAddressToClipboard}
+            className="text-sm text-blue-600 hover:underline"
           >
-            MoMo / Card
+            Copy BTC Address
           </button>
-          <button
-            onClick={() => setSelectedMethod("btc")}
-            className={`px-4 py-2 rounded ${
-              selectedMethod === "btc"
-                ? "bg-yellow-500 text-white"
-                : "bg-gray-200 text-gray-700"
-            }`}
-          >
-            BTC
-          </button>
-        </div>
 
-        {selectedMethod === "btc" && (
-          <div className="bg-gray-100 p-4 rounded space-y-3">
-            <p className="text-sm text-gray-800">
-              Send exactly ₵100 worth of BTC to:
-            </p>
-            <p className="font-mono text-sm text-gray-900 break-all">{btcAddress}</p>
-
-            <button
-              onClick={copyAddressToClipboard}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              Copy BTC Address
-            </button>
-
-            <div className="mt-4 flex justify-center">
-              <QRCode value={btcAddress} size={128} />
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              After sending, click “Confirm BTC Payment” below to continue.
-            </p>
+          <div className="mt-4 flex justify-center">
+            <QRCode value={btcAddress} size={128} />
           </div>
-        )}
+          <p className="text-xs text-gray-500 mt-2">
+            After sending, click “Confirm BTC Payment” below to continue.
+          </p>
+        </div>
 
         <button
           onClick={handlePayment}
           disabled={processing}
           className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700 transition"
         >
-          {processing
-            ? "Processing..."
-            : selectedMethod === "btc"
-            ? "Confirm BTC Payment"
-            : "Pay ₵100 Now (MoMo / Card)"}
+          {processing ? "Processing..." : "Confirm BTC Payment"}
         </button>
       </div>
     </div>
