@@ -12,6 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
+import { registerUser } from "../services/api";
+
 const logoSrc = "/cashplane-logo.png";
 
 export default function Registration() {
@@ -23,6 +25,16 @@ export default function Registration() {
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
+  const registerUserBackend = async (userData) => {
+    try {
+      await registerUser(userData);
+      toast.success("Registered on backend!");
+    } catch (err) {
+      console.error("Backend registration error:", err);
+      toast.error("Backend registration failed.");
+    }
+  };
 
   const handleEmailSignup = async (e) => {
     e.preventDefault();
@@ -45,8 +57,18 @@ export default function Registration() {
         emailVerified: false,
       });
 
-      toast.success("Verification email sent. Check your inbox.");
-      navigate("/verify");
+      await registerUserBackend({
+        fullname: form.fullname,
+        email: form.email,
+        password: form.password,
+      });
+
+      toast.success("Verification email sent. Please check your inbox.");
+
+      // Delay before navigating to /verify so user sees the toast
+      setTimeout(() => {
+        navigate("/verify");
+      }, 2000);
     } catch (err) {
       console.error("Email signup error:", err.message);
       toast.error("Signup failed. " + err.message);
@@ -171,10 +193,7 @@ export default function Registration() {
 
         <p className="text-center text-sm mt-4 text-gray-300">
           Already have an account?{" "}
-          <a
-            href="/login"
-            className="text-blue-400 hover:underline transition"
-          >
+          <a href="/login" className="text-blue-400 hover:underline transition">
             Login
           </a>
         </p>

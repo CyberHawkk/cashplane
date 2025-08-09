@@ -8,6 +8,19 @@ export default function Verify() {
   const [checking, setChecking] = useState(false);
   const [resending, setResending] = useState(false);
   const [canResend, setCanResend] = useState(true);
+  const [countdown, setCountdown] = useState(60);
+
+  // Countdown logic for resend cooldown
+  useEffect(() => {
+    let timer;
+    if (!canResend && countdown > 0) {
+      timer = setTimeout(() => setCountdown((prev) => prev - 1), 1000);
+    } else if (countdown === 0) {
+      setCanResend(true);
+      setCountdown(60);
+    }
+    return () => clearTimeout(timer);
+  }, [canResend, countdown]);
 
   const checkVerification = async () => {
     if (!auth.currentUser) {
@@ -27,7 +40,7 @@ export default function Verify() {
       }
     } catch (error) {
       console.error("Verification check error:", error);
-      toast.error("Something went wrong.");
+      toast.error("Something went wrong while checking.");
     } finally {
       setChecking(false);
     }
@@ -48,9 +61,9 @@ export default function Verify() {
     } catch (error) {
       console.error("Resend error:", error);
       toast.error("Failed to resend verification email.");
+      setCanResend(true); // Allow retry on error
     } finally {
       setResending(false);
-      setTimeout(() => setCanResend(true), 60000); // 60 sec delay
     }
   };
 
@@ -70,7 +83,7 @@ export default function Verify() {
           disabled={checking}
           className="bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700 transition"
         >
-          {checking ? "Checking..." : "I've Verified My Email"}
+          {checking ? "Checking..." : "✅ I've Verified My Email"}
         </button>
 
         <div className="mt-4">
@@ -83,11 +96,11 @@ export default function Verify() {
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
           >
-            {resending ? "Resending..." : "Resend Verification Email"}
+            {resending ? "Resending..." : "📨 Resend Verification Email"}
           </button>
           {!canResend && (
             <p className="text-xs text-gray-400 mt-1">
-              You can resend again in a minute.
+              You can resend again in {countdown}s.
             </p>
           )}
         </div>

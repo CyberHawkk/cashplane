@@ -14,7 +14,9 @@ export default function SnakeGame() {
   const [dir, setDir] = useState({ x: 1, y: 0 });
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
+  const [highScore, setHighScore] = useState(() => Number(localStorage.getItem("snakeHighScore")) || 0);
   const [paused, setPaused] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
 
   function randomFood() {
     return {
@@ -24,7 +26,8 @@ export default function SnakeGame() {
   }
 
   useEffect(() => {
-    const ctx = canvasRef.current.getContext("2d");
+    const ctx = canvasRef.current?.getContext("2d");
+    draw(ctx);
 
     const interval = setInterval(() => {
       if (!gameOver && !paused) {
@@ -66,6 +69,42 @@ export default function SnakeGame() {
     };
   }, [dir, gameOver, paused, snake]);
 
+  useEffect(() => {
+    const touchStartRef = { x: null, y: null };
+
+    const handleTouchStart = (e) => {
+      const touch = e.touches[0];
+      touchStartRef.x = touch.clientX;
+      touchStartRef.y = touch.clientY;
+    };
+
+    const handleTouchMove = (e) => {
+      if (!touchStartRef.x || !touchStartRef.y) return;
+
+      const touch = e.touches[0];
+      const dx = touch.clientX - touchStartRef.x;
+      const dy = touch.clientY - touchStartRef.y;
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx > 0 && dir.x !== -1) setDir({ x: 1, y: 0 });
+        else if (dx < 0 && dir.x !== 1) setDir({ x: -1, y: 0 });
+      } else {
+        if (dy > 0 && dir.y !== -1) setDir({ x: 0, y: 1 });
+        else if (dy < 0 && dir.y !== 1) setDir({ x: 0, y: -1 });
+      }
+
+      touchStartRef.x = null;
+      touchStartRef.y = null;
+    };
+
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchmove", handleTouchMove);
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [dir]);
+
   const update = () => {
     const newSnake = [...snake];
     const head = {
@@ -81,6 +120,10 @@ export default function SnakeGame() {
       newSnake.some((segment) => segment.x === head.x && segment.y === head.y)
     ) {
       setGameOver(true);
+      if (score > highScore) {
+        setHighScore(score);
+        localStorage.setItem("snakeHighScore", score);
+      }
       return;
     }
 
@@ -89,10 +132,12 @@ export default function SnakeGame() {
     if (head.x === food.x && head.y === food.y) {
       setFood(randomFood());
       setScore((prev) => prev + 1);
-      try {
-        eatSound.current?.play();
-      } catch (err) {
-        console.warn("Sound error:", err);
+      if (soundOn) {
+        try {
+          eatSound.current?.play();
+        } catch (err) {
+          console.warn("Sound error:", err);
+        }
       }
     } else {
       newSnake.pop();
@@ -102,9 +147,10 @@ export default function SnakeGame() {
   };
 
   const draw = (ctx) => {
+    if (!ctx) return;
     ctx.clearRect(0, 0, canvasSize, canvasSize);
 
-    // Draw food - Red box
+    // Draw food
     ctx.fillStyle = "red";
     ctx.fillRect(food.x * scale, food.y * scale, scale, scale);
 
@@ -131,18 +177,19 @@ export default function SnakeGame() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-4">
+    <div className="flex flex-col items-center justify-center p-4 select-none">
       <h1 className="text-3xl font-bold mb-4">🐍 Snake Game</h1>
       <canvas
         ref={canvasRef}
         width={canvasSize}
         height={canvasSize}
-        className="border-4 border-gray-700 rounded-lg shadow-xl"
+        className="border-4 border-white bg-black rounded-lg shadow-xl touch-none"
       />
       <div className="mt-4 space-y-2 text-center">
         <p className="text-lg font-medium">Score: {score}</p>
+        <p className="text-sm text-gray-400">High Score: {highScore}</p>
         <p className="text-sm text-gray-500">
-          Controls: Arrow keys to move | <strong>P</strong> to Pause/Resume | Space to boost
+          Controls: Arrow keys or swipe | <strong>P</strong> to Pause | Space to boost
         </p>
       </div>
 
@@ -162,6 +209,12 @@ export default function SnakeGame() {
             {paused ? "▶️ Resume" : "⏸️ Pause"}
           </button>
         )}
+        <button
+          onClick={() => setSoundOn(!soundOn)}
+          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow"
+        >
+          {soundOn ? "🔊 Sound On" : "🔇 Sound Off"}
+        </button>
       </div>
 
       <audio ref={eatSound} preload="auto">

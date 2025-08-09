@@ -6,13 +6,13 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'), // optional alias
+      '@': path.resolve(__dirname, './src'),
     },
   },
   server: {
-    port: 5173, // or any preferred port
+    port: 5173,
     open: true,
-    // 🔥 This is the key fix:
-    historyApiFallback: true,
   },
+  // 🔥 Add this to enable SPA fallback
+  appType: 'spa',
 });
